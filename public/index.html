@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Location Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        #map { height: 600px; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Real-Time Location Tracker</h1>
+    <div id="map"></div>
+    <table>
+        <thead>
+            <tr>
+                <th>Latitude</th>
+                <th>Longitude</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody id="location-table"></tbody>
+    </table>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([0, 0], 2);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+        }).addTo(map);
+
+        async function fetchLocations() {
+            const response = await fetch('/getlocations');
+            const locations = await response.json();
+            const table = document.getElementById('location-table');
+            table.innerHTML = '';
+
+            locations.forEach(location => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${location.latitude}</td>
+                    <td>${location.longitude}</td>
+                    <td>${new Date(location.timestamp).toLocaleString()}</td>
+                `;
+                table.appendChild(row);
+
+                L.marker([location.latitude, location.longitude])
+                  .addTo(map)
+                  .bindPopup(`${location.latitude}, ${location.longitude}`)
+                  .openPopup();
+            });
+        }
+
+        setInterval(fetchLocations, 15000); // Fetch new locations every 15 seconds
+        fetchLocations();
+    </script>
+</body>
+</html>
